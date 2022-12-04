@@ -20,8 +20,7 @@ async def process_loop(message, data):
 
             await bot.send_message(message.from_user.id, "\n".join(data))
 
-        await asyncio.sleep(10)
-        await bot.send_message(message.from_user.id, "I'm working")
+        await asyncio.sleep(60)
 
 
 @dp.message_handler(lambda message: 'Adduser' in message.text)
