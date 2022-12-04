@@ -90,8 +90,11 @@ async def start(message: types.Message):
     data = []
 
     if in_whitelist or message.from_user.username == ADMIN:
-        asyncio.ensure_future(process_loop(message, data))
-        loop.run_forever()
+        try:
+            asyncio.ensure_future(process_loop(message, data))
+            loop.run_forever()
+        except AssertionError:
+            pass
     else:
         await  bot.send_message(
             message.from_user.id,
