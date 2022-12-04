@@ -24,9 +24,13 @@ async def add_user(message: types.Message):
         whitelist.append(full_name)
         services.write_file(whitelist)
 
-        await message.reply('User has been successfully added to the whitelist.')
+        await bot.send_message(
+            message.from_user.id,
+            'User has been successfully added to the whitelist.')
     else:
-        await message.reply('User already in the whitelist.')
+        await bot.send_message(
+            message.from_user.id,
+            'User already in the whitelist.')
 
 
 @dp.message_handler(lambda message: 'Removeuser' in message.text)
@@ -42,9 +46,13 @@ async def remove_user(message: types.Message):
         whitelist.remove(full_name)
         services.write_file(whitelist)
 
-        await message.reply('User has been removed from the whitelist.')
+        await bot.send_message(
+            message.from_user.id,
+            'User has been removed from the whitelist.')
     else:
-        await message.reply('User already is in the whitelist.')
+        await bot.send_message(
+            message.from_user.id,
+            'User already is in the whitelist.')
 
 
 @dp.message_handler(lambda message: 'Whitelist' in message.text)
@@ -78,7 +86,9 @@ async def start(message: types.Message):
 
             time.sleep(60)
     else:
-        await  message.reply('You have no right for it.')
+        await  bot.send_message(
+            message.from_user.id,
+            'You have no right for it.')
 
 
 if __name__ == '__main__':
