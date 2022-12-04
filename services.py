@@ -66,10 +66,10 @@ class Services:
 
         return False
 
-    def get_check_whitelist(self, user_full_name):
+    def get_check_whitelist(self, username):
         whitelist = self.read_file()
 
-        if user_full_name in whitelist:
+        if username in whitelist:
             return whitelist, True
 
         return whitelist, False

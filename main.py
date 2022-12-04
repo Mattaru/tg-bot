@@ -1,9 +1,8 @@
-import time
+import asyncio
 
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, filters, executor, types
 
-import settings
-from services import Services
+from services import  Services
 from settings import TOKEN, ADMIN
 
 
@@ -12,17 +11,30 @@ dp = Dispatcher(bot)
 services = Services('https://mw2.global/forum/')
 
 
+async def process_loop(message, data):
+    while True:
+        new_data = services.get_data_table()
+
+        if new_data != data:
+            data = new_data
+
+            await bot.send_message(message.from_user.id, "\n".join(data))
+
+        await asyncio.sleep(10)
+        await bot.send_message(message.from_user.id, "I'm working")
+
+
 @dp.message_handler(lambda message: 'Adduser' in message.text)
 async def add_user(message: types.Message):
-    full_name, err = services.get_user_name(message.text)
+    username, err = services.get_user_name(message.text)
 
     if not message.from_user.username == ADMIN or err:
         return
 
-    whitelist, in_whitelist = services.get_check_whitelist(full_name)
+    whitelist, in_whitelist = services.get_check_whitelist(username)
 
     if not in_whitelist:
-        whitelist.append(full_name)
+        whitelist.append(username)
         services.write_file(whitelist)
 
         await bot.send_message(
@@ -36,15 +48,15 @@ async def add_user(message: types.Message):
 
 @dp.message_handler(lambda message: 'Removeuser' in message.text)
 async def remove_user(message: types.Message):
-    full_name, err = services.get_user_name(message.text)
+    username, err = services.get_user_name(message.text)
 
     if not message.from_user.username == ADMIN or err:
         return
 
-    whitelist, in_whitelist = services.get_check_whitelist(full_name)
+    whitelist, in_whitelist = services.get_check_whitelist(username)
 
     if message.from_user.username == ADMIN and in_whitelist:
-        whitelist.remove(full_name)
+        whitelist.remove(username)
         services.write_file(whitelist)
 
         await bot.send_message(
@@ -72,23 +84,18 @@ async def user_list(message: types.Message):
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    tg_username = message.from_user.username
-    whitelist, in_whitelist = services.get_check_whitelist(tg_username)
+    username = message.from_user.username
+    whitelist, in_whitelist = services.get_check_whitelist(username)
+    loop = asyncio.get_event_loop()
     data = []
-    if in_whitelist or tg_username == settings.ADMIN:
-        while True:
-            new_data = services.get_data_table()
 
-            if new_data != data:
-                data = new_data
-
-                await bot.send_message(message.from_user.id, "\n".join(data))
-
-            time.sleep(60)
+    if in_whitelist or message.from_user.username == ADMIN:
+        asyncio.ensure_future(process_loop(message, data))
+        loop.run_forever()
     else:
-        await bot.send_message(
+        await  bot.send_message(
             message.from_user.id,
-            'You have no the permission for it.')
+            'You have no right for it.')
 
 
 if __name__ == '__main__':

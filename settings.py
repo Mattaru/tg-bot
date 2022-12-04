@@ -1,2 +1,2 @@
-TOKEN = '1081774773:AAE-yIyPzmHd_kOBKGOyiSUMtYdZVHI4pGc'
-ADMIN = 'Ganlb'
+TOKEN = 'token'
+ADMIN = 'username'
