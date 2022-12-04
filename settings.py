@@ -1,2 +1,2 @@
 TOKEN = 'token'
-ADMIN = 'Full Name'
+ADMIN = 'username'
