@@ -1,8 +1,9 @@
 import time
 
-from aiogram import Bot, Dispatcher, filters, executor, types
+from aiogram import Bot, Dispatcher, executor, types
 
-from services import  Services
+import settings
+from services import Services
 from settings import TOKEN, ADMIN
 
 
@@ -15,7 +16,7 @@ services = Services('https://mw2.global/forum/')
 async def add_user(message: types.Message):
     full_name, err = services.get_user_name(message.text)
 
-    if not message.from_user.full_name == ADMIN or err:
+    if not message.from_user.username == ADMIN or err:
         return
 
     whitelist, in_whitelist = services.get_check_whitelist(full_name)
@@ -37,12 +38,12 @@ async def add_user(message: types.Message):
 async def remove_user(message: types.Message):
     full_name, err = services.get_user_name(message.text)
 
-    if not message.from_user.full_name == ADMIN or err:
+    if not message.from_user.username == ADMIN or err:
         return
 
     whitelist, in_whitelist = services.get_check_whitelist(full_name)
 
-    if message.from_user.full_name == ADMIN and in_whitelist:
+    if message.from_user.username == ADMIN and in_whitelist:
         whitelist.remove(full_name)
         services.write_file(whitelist)
 
@@ -65,17 +66,16 @@ async def user_list(message: types.Message):
     user_id = message.from_user.id
     whitelist = services.read_file()
 
-    if message.from_user.full_name == ADMIN:
+    if message.from_user.username == ADMIN:
         await bot.send_message(user_id, "\n".join(whitelist))
 
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    user_full_name = message.from_user.full_name
-    whitelist, in_whitelist = services.get_check_whitelist(user_full_name)
+    tg_username = message.from_user.username
+    whitelist, in_whitelist = services.get_check_whitelist(tg_username)
     data = []
-
-    if in_whitelist:
+    if in_whitelist or tg_username == settings.ADMIN:
         while True:
             new_data = services.get_data_table()
 
@@ -86,9 +86,9 @@ async def start(message: types.Message):
 
             time.sleep(60)
     else:
-        await  bot.send_message(
+        await bot.send_message(
             message.from_user.id,
-            'You have no right for it.')
+            'You have no the permission for it.')
 
 
 if __name__ == '__main__':
