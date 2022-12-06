@@ -1,2 +1,2 @@
 TOKEN = 'token'
-ADMIN = 'username'
+ADMIN = 'tg_login'

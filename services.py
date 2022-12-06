@@ -5,7 +5,8 @@ import requests
 
 
 class Services:
-    commands = ['Adduser', 'Removeuser', 'Whitelist']
+    allowed_commands = ('Adduser', 'Removeuser', 'Whitelist')
+    whitelist_file_name = 'whitelist.json'
 
     def __init__(self, url):
         self.url = url
@@ -18,56 +19,43 @@ class Services:
         return name, err
 
     def check_text(self, text):
-        data = list(text.split(" "))
+        data = text.split(" ")
 
-        if data[0] in self.commands:
+        if data[0] in self.allowed_commands:
             return data, False
 
         return data, True
 
-    def get_http(self):
+    def get_html(self):
         r = requests.get(self.url)
 
         return r.text
 
     def get_data_table(self):
-        http = self.get_http()
-        soup = BeautifulSoup(http, 'html.parser')
+        raw_html = self.get_html()
+        soup = BeautifulSoup(raw_html, 'html.parser')
 
-        items = []
         table = []
-        li_count = 0
-
-        for item in soup.select('div.ipsPad'):
-            for i in item.select('li'):
-                li_count = li_count + 1
-
-                for str in i.select('b'):
-                    text = str.text
-                    items.append(text)
-
-        for i in range(1, li_count):
-            table.append(f'{items.pop(0)}     {items.pop(0)} - {items.pop(0)}')
+        bosses_list = soup.select('div.ipsWidget_inner.ipsPad ul li')
+        for boss in bosses_list:
+            boss_status = boss.select('span')[0].text
+            boss_data = boss.select('b')
+            boss_name = boss_data[0].text
+            table.append(
+                f'{boss_name}     {(boss_data[1].text + "-" + boss_data[2].text) if not boss_status == "Alive" else boss_status}')
 
         return table
 
-    def read_file(self):
-        data = None
+    def read_from_whitelist(self):
+        with open(self.whitelist_file_name, 'r') as file:
+            return json.load(file)
 
-        with open('whitelist.json', 'r') as file:
-            data = json.load(file)
+    def write_to_whitelist(self, new_data):
+        with open(self.whitelist_file_name, 'w') as file:
+            file.write(json.dumps(new_data))
 
-        return data
-
-    def write_file(self, new_data):
-        with open('whitelist.json', 'w') as file:
-            f = json.dumps(new_data)
-            file.write(f)
-
-        return False
-
-    def get_check_whitelist(self, username):
-        whitelist = self.read_file()
+    def check_in_whitelist(self, username):
+        whitelist = self.read_from_whitelist()
 
         if username in whitelist:
             return whitelist, True

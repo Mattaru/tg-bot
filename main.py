@@ -1,8 +1,8 @@
 import asyncio
 
-from aiogram import Bot, Dispatcher, filters, executor, types
+from aiogram import Bot, Dispatcher, executor, types
 
-from services import  Services
+from services import Services
 from settings import TOKEN, ADMIN
 
 
@@ -30,19 +30,19 @@ async def add_user(message: types.Message):
     if not message.from_user.username == ADMIN or err:
         return
 
-    whitelist, in_whitelist = services.get_check_whitelist(username)
+    whitelist, in_whitelist = services.check_in_whitelist(username)
 
     if not in_whitelist:
         whitelist.append(username)
-        services.write_file(whitelist)
+        services.write_to_whitelist(whitelist)
 
         await bot.send_message(
             message.from_user.id,
-            'User has been successfully added to the whitelist.')
+            f'User "{username}" has been successfully added to the whitelist.')
     else:
         await bot.send_message(
             message.from_user.id,
-            'User already in the whitelist.')
+            f'User "{username}" already in the whitelist.')
 
 
 @dp.message_handler(lambda message: 'Removeuser' in message.text)
@@ -52,19 +52,19 @@ async def remove_user(message: types.Message):
     if not message.from_user.username == ADMIN or err:
         return
 
-    whitelist, in_whitelist = services.get_check_whitelist(username)
+    whitelist, in_whitelist = services.check_in_whitelist(username)
 
     if message.from_user.username == ADMIN and in_whitelist:
         whitelist.remove(username)
-        services.write_file(whitelist)
+        services.write_to_whitelist(whitelist)
 
         await bot.send_message(
             message.from_user.id,
-            'User has been removed from the whitelist.')
+            f'User "{username}" has been removed from the whitelist.')
     else:
         await bot.send_message(
             message.from_user.id,
-            'User already is in the whitelist.')
+            f'User "{username}" already is in the whitelist.')
 
 
 @dp.message_handler(lambda message: 'Whitelist' in message.text)
@@ -75,7 +75,7 @@ async def user_list(message: types.Message):
         return
 
     user_id = message.from_user.id
-    whitelist = services.read_file()
+    whitelist = services.read_from_whitelist()
 
     if message.from_user.username == ADMIN:
         await bot.send_message(user_id, "\n".join(whitelist))
@@ -84,7 +84,7 @@ async def user_list(message: types.Message):
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     username = message.from_user.username
-    whitelist, in_whitelist = services.get_check_whitelist(username)
+    whitelist, in_whitelist = services.check_in_whitelist(username)
     loop = asyncio.get_event_loop()
     data = []
 
@@ -95,10 +95,10 @@ async def start(message: types.Message):
         except AssertionError:
             pass
     else:
-        await  bot.send_message(
+        await bot.send_message(
             message.from_user.id,
-            'You have no right for it.')
+            'You have no permissions for it.')
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True, timeout=90)
